@@ -1,302 +1,293 @@
-/************************************************************************************//**
-* \file         Source/com.c
-* \brief        Bootloader communication interface source file.
-* \ingroup      Core
-* \internal
-*----------------------------------------------------------------------------------------
-*                          C O P Y R I G H T
-*----------------------------------------------------------------------------------------
-*   Copyright (c) 2011  by Feaser    http://www.feaser.com    All rights reserved
-*
-*----------------------------------------------------------------------------------------
-*                            L I C E N S E
-*----------------------------------------------------------------------------------------
-* This file is part of OpenBLT. OpenBLT is free software: you can redistribute it and/or
-* modify it under the terms of the GNU General Public License as published by the Free
-* Software Foundation, either version 3 of the License, or (at your option) any later
-* version.
-*
-* OpenBLT is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-* PURPOSE. See the GNU General Public License for more details.
-*
-* You have received a copy of the GNU General Public License along with OpenBLT. It
-* should be located in ".\Doc\license.html". If not, contact Feaser to obtain a copy.
-*
-* \endinternal
-****************************************************************************************/
+//----------------------------------------------------------------------
+// Titel	:	com.c
+//----------------------------------------------------------------------
+// Sprache	:	C
+// Datum	:	05.06.2026
+// Autor	:	Diveturtle93
+// Projekt	:	STM32F7_MicroBoot
+// Quelle	:	https://github.com/feaser/openblt/blob/master/Target/Source/com.c
+//----------------------------------------------------------------------
 
-/****************************************************************************************
-* Include files
-****************************************************************************************/
-#include "boot.h"                                /* bootloader generic header          */
+// Lizenz
+//----------------------------------------------------------------------
+// Copyright (c) 2011  by Feaser    http://www.feaser.com    All rights reserved
+//
+// This file is part of OpenBLT. OpenBLT is free software: you can redistribute it and/or
+// modify it under the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any later
+// version.
+//
+// OpenBLT is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+// without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE. See the GNU General Public License for more details.
+//
+// You have received a copy of the GNU General Public License along with OpenBLT. It
+// should be located in ".\Doc\license.html". If not, contact Feaser to obtain a copy.
+//----------------------------------------------------------------------
+
+// Einfuegen der standard Include-Dateien
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+
+// Einfuegen der STM Include-Dateien
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+
+// Einfuegen der eigenen Include-Dateien
+//----------------------------------------------------------------------
+#include "boot.h"
+
 #if (BOOT_COM_CAN_ENABLE > 0)
-#include "can_t.h"                                 /* can driver module                  */
+	#include "can_t.h"
 #endif
+//----------------------------------------------------------------------
 
-
+// Konstanten definieren
+//----------------------------------------------------------------------
+// Timeout der Kommunikation in ms. Zeit zwischen dem Senden der letzten Antwort und
+// dem Empfang der naechsten Anfrage. Wird die Zeit ueberschritten, wird ein Timeout
+// ausgeloest. Kann in blt_conf.h ueberschrieben werden.
 #if (BOOT_COM_ENABLE > 0)
-/****************************************************************************************
-* Macro definitions
-****************************************************************************************/
-#ifndef BOOT_COM_TIMEOUT_MS
-/** \brief Configure the communication timeout time in milliseconds. This is the time
- *         between the sending of the last response packet and the reception of the next
- *         request packet. If this time exceeds the time configured by this macro, a
- *         timeout event is triggered. Note that this value can be overriden by another
- *         value, if added to blt_conf.h.
- */
-#define BOOT_COM_TIMEOUT_MS                 (5000U)
+	#ifndef BOOT_COM_TIMEOUT_MS
+		#define BOOT_COM_TIMEOUT_MS				(5000U)
+	#endif
 #endif
+//----------------------------------------------------------------------
 
+// Variablen definieren
+//----------------------------------------------------------------------
+#if (BOOT_COM_ENABLE > 0)
+	static tComInterfaceId comActiveInterface = COM_IF_OTHER;				// Aktuell aktive Kommunikationsschnittstelle
+	static blt_bool comTimeoutMonitoringActive;								// Timeout-Ueberwachung aktiv
+	static blt_int32u comLastResponseTransmitTime;							// Zeitstempel der letzten gesendeten Antwort in ms
+#endif
+//----------------------------------------------------------------------
 
-/****************************************************************************************
-* Function prototypes
-****************************************************************************************/
-static void     ComTimeoutEnable(blt_bool enable);
-static blt_bool ComTimeoutDetected(void);
-static void     ComTimeoutReset(void);
+// Funktionen definieren
+//----------------------------------------------------------------------
+#if (BOOT_COM_ENABLE > 0)
+	static void ComTimeoutEnable (blt_bool enable);							// Timeout-Ueberwachung ein- oder ausschalten
+	static blt_bool ComTimeoutDetected (void);								// Pruefen ob ein Timeout aufgetreten ist
+	static void ComTimeoutReset (void);										// Timeout-Zeit zuruecksetzen
+#endif
+//----------------------------------------------------------------------
 
-
-/****************************************************************************************
-* Local data declarations
-****************************************************************************************/
-/** \brief Holds the communication interface of the currently active interface. */
-static tComInterfaceId comActiveInterface = COM_IF_OTHER;
-
-/** \brief Boolean flag to enable / disable the timeout monitoring. */
-static blt_bool comTimeoutMonitoringActive;
-
-/** \brief Holds a timestamp in milliseconds when the last response packet was
- *         transmitted. Use by the communication timeout detection.
- */
-static blt_int32u comLastResponseTransmitTime;
-
-
-/************************************************************************************//**
-** \brief     Initializes the communication module including the hardware needed for
-**            the communication.
-** \return    none
-**
-****************************************************************************************/
-void ComInit(void)
+// Kommunikationsmodul inklusive benoetigter Hardware initialisieren
+//----------------------------------------------------------------------
+#if (BOOT_COM_ENABLE > 0)
+void ComInit (void)
 {
-  /* disable timeout monitoring by default. */
-  ComTimeoutEnable(BLT_FALSE);  
-  /* initialize the XCP communication protocol */
-  XcpInit();
-  /* initialize the CAN controller */
-  CanInit();
-  /* set it as active */
-  comActiveInterface = COM_IF_CAN;
-} /*** end of ComInit ***/
+	// Timeout-Ueberwachung standardmaessig ausschalten
+	ComTimeoutEnable(BLT_FALSE);
 
+	// XCP-Protokoll initialisieren
+	XcpInit();
 
-/************************************************************************************//**
-** \brief     Updates the communication module by checking if new data was received
-**            and submitting the request to process newly received data.
-** \return    none
-**
-****************************************************************************************/
-void ComTask(void)
+	// CAN-Controller initialisieren
+	CanInit();
+
+	// CAN als aktive Schnittstelle setzen
+	comActiveInterface = COM_IF_CAN;
+}
+#endif
+//----------------------------------------------------------------------
+
+// Auf neu empfangene Daten pruefen und deren Verarbeitung anstossen
+//----------------------------------------------------------------------
+#if (BOOT_COM_ENABLE > 0)
+void ComTask (void)
 {
-  blt_int8u xcpPacketLen;
-  /* make xcpCtoReqPacket static for runtime efficiency */
-  static blt_int8u xcpCtoReqPacket[BOOT_COM_RX_MAX_DATA];
+	blt_int8u xcpPacketLen;
 
-  if (CanReceivePacket(&xcpCtoReqPacket[0], &xcpPacketLen) == BLT_TRUE)
-  {
-    /* make this the active interface */
-    comActiveInterface = COM_IF_CAN;
-    /* enable timeout monitoring. */
-    ComTimeoutEnable(BLT_TRUE);  
-    /* process packet */
-    XcpPacketReceived(&xcpCtoReqPacket[0], xcpPacketLen);
-  }
+	// Puffer static fuer bessere Laufzeit
+	static blt_int8u xcpCtoReqPacket[BOOT_COM_RX_MAX_DATA];
 
-  /* check if a communication timeout event occurred. */
-  if (ComTimeoutDetected() == BLT_TRUE)
-  {
+	if (CanReceivePacket(&xcpCtoReqPacket[0], &xcpPacketLen) == BLT_TRUE)
+	{
+		// CAN als aktive Schnittstelle setzen
+		comActiveInterface = COM_IF_CAN;
 
-  }
-} /*** end of ComTask ***/
+		// Timeout-Ueberwachung einschalten
+		ComTimeoutEnable(BLT_TRUE);
 
+		// Paket verarbeiten
+		XcpPacketReceived(&xcpCtoReqPacket[0], xcpPacketLen);
+	}
 
-/************************************************************************************//**
-** \brief     Releases the communication module.
-** \return    none
-**
-****************************************************************************************/
-void ComFree(void)
+	// Pruefen ob ein Timeout der Kommunikation aufgetreten ist
+	if (ComTimeoutDetected() == BLT_TRUE)
+	{
+		// Aktuell keine Reaktion auf einen Timeout
+	}
+}
+#endif
+//----------------------------------------------------------------------
+
+// Kommunikationsmodul freigeben
+//----------------------------------------------------------------------
+#if (BOOT_COM_ENABLE > 0)
+void ComFree (void)
 {
-  /* disable timeout monitoring. */
-  ComTimeoutEnable(BLT_FALSE);
-} /*** end of ComFree ***/
+	// Timeout-Ueberwachung ausschalten
+	ComTimeoutEnable(BLT_FALSE);
+}
+#endif
+//----------------------------------------------------------------------
 
-
-/************************************************************************************//**
-** \brief     Transmits the packet using the xcp transport layer.
-** \param     data Pointer to the byte buffer with packet data.
-** \param     len  Number of data bytes that need to be transmitted.
-** \return    none
-**
-****************************************************************************************/
-void ComTransmitPacket(blt_int8u *data, blt_int16u len)
+// Paket ueber die XCP-Transportschicht senden
+// data = Zeiger auf die Paketdaten, len = Anzahl Bytes
+//----------------------------------------------------------------------
+#if (BOOT_COM_ENABLE > 0)
+void ComTransmitPacket (blt_int8u *data, blt_int16u len)
 {
-  /* transmit the packet. note that len is limited to 8 in the plausibility check,
-   * so cast is okay.
-   */
-  if (comActiveInterface == COM_IF_CAN)
-  {
-    CanTransmitPacket(data, (blt_int8u)len);
-  }
+	// Paket senden. len ist durch die Plausibilitaetspruefung auf 8 begrenzt, daher ist
+	// der Cast unkritisch.
+	if (comActiveInterface == COM_IF_CAN)
+	{
+		CanTransmitPacket(data, (blt_int8u)len);
+	}
 
-  /* send signal that the packet was transmitted */
-  XcpPacketTransmitted();
-  /* reset the communication timeout monitoring. */
-  ComTimeoutReset();
-} /*** end of ComTransmitPacket ***/
+	// Melden, dass das Paket gesendet wurde
+	XcpPacketTransmitted();
 
+	// Timeout-Ueberwachung zuruecksetzen
+	ComTimeoutReset();
+}
+#endif
+//----------------------------------------------------------------------
 
-/************************************************************************************//**
-** \brief     Obtains the maximum number of bytes that can be received on the specified
-**            communication interface.
-** \return    Maximum number of bytes that can be received.
-**
-****************************************************************************************/
-blt_int16u ComGetActiveInterfaceMaxRxLen(void)
+// Maximale Anzahl Bytes, die auf der aktiven Schnittstelle empfangen werden koennen
+//----------------------------------------------------------------------
+#if (BOOT_COM_ENABLE > 0)
+blt_int16u ComGetActiveInterfaceMaxRxLen (void)
 {
-  blt_int16u result;
+	blt_int16u result;
 
-  /* filter on communication interface identifier */
-  switch (comActiveInterface)
-  {
-    case COM_IF_CAN:
-      result = BOOT_COM_CAN_RX_MAX_DATA;
-      break;
+	// Nach Kommunikationsschnittstelle unterscheiden
+	switch (comActiveInterface)
+	{
+		case COM_IF_CAN:
+		{
+			result = BOOT_COM_CAN_RX_MAX_DATA;
+			break;
+		}
+		default:
+		{
+			result = BOOT_COM_RX_MAX_DATA;
+			break;
+		}
+	}
 
-    default:
-      result = BOOT_COM_RX_MAX_DATA;
-      break;
-  }
+	return result;
+}
+#endif
+//----------------------------------------------------------------------
 
-  return result;
-} /*** end of ComGetActiveInterfaceMaxRxLen ***/
-
-
-/************************************************************************************//**
-** \brief     Obtains the maximum number of bytes that can be transmitted on the
-**            specified communication interface.
-** \return    Maximum number of bytes that can be received.
-**
-****************************************************************************************/
-blt_int16u ComGetActiveInterfaceMaxTxLen(void)
+// Maximale Anzahl Bytes, die auf der aktiven Schnittstelle gesendet werden koennen
+//----------------------------------------------------------------------
+#if (BOOT_COM_ENABLE > 0)
+blt_int16u ComGetActiveInterfaceMaxTxLen (void)
 {
-  blt_int16u result;
+	blt_int16u result;
 
-  /* filter on communication interface identifier */
-  switch (comActiveInterface)
-  {
-    case COM_IF_CAN:
-      result = BOOT_COM_CAN_TX_MAX_DATA;
-      break;
+	// Nach Kommunikationsschnittstelle unterscheiden
+	switch (comActiveInterface)
+	{
+		case COM_IF_CAN:
+		{
+			result = BOOT_COM_CAN_TX_MAX_DATA;
+			break;
+		}
+		default:
+		{
+			result = BOOT_COM_TX_MAX_DATA;
+			break;
+		}
+	}
 
-    default:
-      result = BOOT_COM_TX_MAX_DATA;
-      break;
-  }
+	return result;
+}
+#endif
+//----------------------------------------------------------------------
 
-  return result;
-} /*** end of ComGetActiveInterfaceMaxTxLen ***/
-
-
-/************************************************************************************//**
-** \brief     This function obtains the XCP connection state.
-** \return    BLT_TRUE when an XCP connection is established, BLT_FALSE otherwise.
-**
-****************************************************************************************/
-blt_bool ComIsConnected(void)
+// XCP-Verbindungszustand abfragen
+// Rueckgabe BLT_TRUE wenn eine XCP-Verbindung besteht, sonst BLT_FALSE
+//----------------------------------------------------------------------
+#if (BOOT_COM_ENABLE > 0)
+blt_bool ComIsConnected (void)
 {
-  blt_bool result = BLT_FALSE;
+	blt_bool result = BLT_FALSE;
 
-  /* Is there an active XCP connection? This indicates that the communication interface
-   * is in the connection state. 
-   */  
-  if (XcpIsConnected())
-  {
-    result = BLT_TRUE;
-  }
+	// Besteht eine aktive XCP-Verbindung, ist die Schnittstelle verbunden
+	if (XcpIsConnected())
+	{
+		result = BLT_TRUE;
+	}
 
-  /* give the result back to the caller. */
-  return result;
-} /*** end of ComIsConnected ***/
+	// Ergebnis zurueckgeben
+	return result;
+}
+#endif
+//----------------------------------------------------------------------
 
-
-/************************************************************************************//**
-** \brief     Enables or disables the communication timeout monitoring.
-** \param     enable BLT_TRUE to enabe, BLT_FALSE to disable.
-** \return    none
-**
-****************************************************************************************/
-static void ComTimeoutEnable(blt_bool enable)
+// Timeout-Ueberwachung der Kommunikation ein- oder ausschalten
+// enable = BLT_TRUE zum Einschalten, BLT_FALSE zum Ausschalten
+//----------------------------------------------------------------------
+#if (BOOT_COM_ENABLE > 0)
+static void ComTimeoutEnable (blt_bool enable)
 {
-  /* update the flag and reset. */
-  comTimeoutMonitoringActive = enable;
-  ComTimeoutReset();
-} /*** end of ComTimeoutEnable ***/
+	// Flag setzen und Timeout zuruecksetzen
+	comTimeoutMonitoringActive = enable;
+	ComTimeoutReset();
+}
+#endif
+//----------------------------------------------------------------------
 
-
-/************************************************************************************//**
-** \brief     Determines if a communication timeout was detected.
-** \return    BLT_TRUE if a communication timeout was detected, BLT_FALSE otherwise.
-**
-****************************************************************************************/
-static blt_bool ComTimeoutDetected(void)
+// Pruefen ob ein Timeout der Kommunikation aufgetreten ist
+// Rueckgabe BLT_TRUE bei Timeout, sonst BLT_FALSE
+//----------------------------------------------------------------------
+#if (BOOT_COM_ENABLE > 0)
+static blt_bool ComTimeoutDetected (void)
 {
-  blt_bool   result = BLT_FALSE;
-  blt_int32u currentTime;
-  blt_int32u deltaTime;
+	blt_bool result = BLT_FALSE;
+	blt_int32u currentTime;
+	blt_int32u deltaTime;
 
-  /* only need to monitor for communication timeouts if something is connected and the
-   * timeout monitoring is enabled.
-   */
-  if ( (ComIsConnected() == BLT_TRUE) && (comTimeoutMonitoringActive == BLT_TRUE) )
-  {
-    /* determine the delta time between the last packet transmission and now. note that
-     * this also works in case of a timer overflow, due to integer math.
-     */
-    currentTime = TimerGet();
-    deltaTime = currentTime - comLastResponseTransmitTime;
-    /* did a communication timeout occur? */
-    if (deltaTime >= BOOT_COM_TIMEOUT_MS)
-    {
-      /* disable the timeout monitoring. otherwise the timeout event keeps triggering.
-       * note that the timeout monitoring is enabled again upon reception of a new
-       * response packet.
-      */
-      ComTimeoutEnable(BLT_FALSE);
-      /* timeout detected. Update the result. */
-      result = BLT_TRUE;
-    }
-  }
+	// Nur ueberwachen, wenn eine Verbindung besteht und die Ueberwachung aktiv ist
+	if ((ComIsConnected() == BLT_TRUE) && (comTimeoutMonitoringActive == BLT_TRUE))
+	{
+		// Zeit seit dem letzten gesendeten Paket bestimmen. Funktioniert durch die
+		// Ganzzahlarithmetik auch bei einem Timer-Ueberlauf.
+		currentTime = TimerGet();
+		deltaTime = currentTime - comLastResponseTransmitTime;
 
-  /* give the result back to the caller. */
-  return result;
-} /*** end of ComTimeoutDetected ***/
+		// Ist ein Timeout aufgetreten?
+		if (deltaTime >= BOOT_COM_TIMEOUT_MS)
+		{
+			// Ueberwachung ausschalten, sonst wird der Timeout staendig erneut ausgeloest.
+			// Mit dem naechsten empfangenen Paket wird sie wieder eingeschaltet.
+			ComTimeoutEnable(BLT_FALSE);
 
+			// Timeout erkannt
+			result = BLT_TRUE;
+		}
+	}
 
-/************************************************************************************//**
-** \brief     Resets the communication timeout time. Should be called each time a 
-**            response packet is transmitted.
-** \return    none
-**
-****************************************************************************************/
-static void ComTimeoutReset(void)
+	// Ergebnis zurueckgeben
+	return result;
+}
+#endif
+//----------------------------------------------------------------------
+
+// Timeout-Zeit zuruecksetzen, nach jedem gesendeten Antwortpaket aufrufen
+//----------------------------------------------------------------------
+#if (BOOT_COM_ENABLE > 0)
+static void ComTimeoutReset (void)
 {
-  /* update the timestamp when the last response packet was transmitted. */
-  comLastResponseTransmitTime = TimerGet();
-} /*** end of ComTimeoutReload ***/
-
-#endif /* BOOT_COM_ENABLE > 0 */
-
-/*********************************** end of com.c **************************************/
+	// Zeitstempel der letzten gesendeten Antwort aktualisieren
+	comLastResponseTransmitTime = TimerGet();
+}
+#endif
+//----------------------------------------------------------------------

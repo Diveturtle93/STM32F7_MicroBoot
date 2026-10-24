@@ -1,43 +1,74 @@
-/************************************************************************************//**
-* \file         Source/backdoor.h
-* \brief        Bootloader backdoor entry header file.
-* \ingroup      Core
-* \internal
-*----------------------------------------------------------------------------------------
-*                          C O P Y R I G H T
-*----------------------------------------------------------------------------------------
-*   Copyright (c) 2011  by Feaser    http://www.feaser.com    All rights reserved
-*
-*----------------------------------------------------------------------------------------
-*                            L I C E N S E
-*----------------------------------------------------------------------------------------
-* This file is part of OpenBLT. OpenBLT is free software: you can redistribute it and/or
-* modify it under the terms of the GNU General Public License as published by the Free
-* Software Foundation, either version 3 of the License, or (at your option) any later
-* version.
-*
-* OpenBLT is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-* PURPOSE. See the GNU General Public License for more details.
-*
-* You have received a copy of the GNU General Public License along with OpenBLT. It
-* should be located in ".\Doc\license.html". If not, contact Feaser to obtain a copy.
-*
-* \endinternal
-****************************************************************************************/
-#ifndef BACKDOOR_H
-#define BACKDOOR_H
+//----------------------------------------------------------------------
+// Titel	:	backdoor.h
+//----------------------------------------------------------------------
+// Sprache	:	C
+// Datum	:	05.06.2026
+// Autor	:	Diveturtle93
+// Projekt	:	STM32F7_MicroBoot
+// Quelle	:	https://github.com/feaser/openblt/blob/master/Target/Source/backdoor.h
+//----------------------------------------------------------------------
 
-/****************************************************************************************
-* Function prototypes
-****************************************************************************************/
-void       BackDoorInit(void);
-void       BackDoorCheck(void);
-#if (BOOT_BACKDOOR_HOOKS_ENABLE == 0)
-void       BackDoorSetExtension(blt_int32u extension_ms);
-blt_int32u BackDoorGetExtension(void);
-void       BackDoorRestartTimer(void);
+// Lizenz
+//----------------------------------------------------------------------
+// Copyright (c) 2011  by Feaser    http://www.feaser.com    All rights reserved
+//
+// This file is part of OpenBLT. OpenBLT is free software: you can redistribute it and/or
+// modify it under the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any later
+// version.
+//
+// OpenBLT is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+// without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE. See the GNU General Public License for more details.
+//
+// You have received a copy of the GNU General Public License along with OpenBLT. It
+// should be located in ".\Doc\license.html". If not, contact Feaser to obtain a copy.
+//----------------------------------------------------------------------
+
+// Sicherheitssymbol
+//----------------------------------------------------------------------
+#pragma once
+//----------------------------------------------------------------------
+
+// Dateiheader definieren
+//----------------------------------------------------------------------
+#ifndef INC_BACKDOOR_H_
+#define INC_BACKDOOR_H_
+//----------------------------------------------------------------------
+
+// Einfuegen der standard Include-Dateien
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+
+// Einfuegen der STM Include-Dateien
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+
+// Einfuegen der eigenen Include-Dateien
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+
+// Definiere Debug-Symbole
+//----------------------------------------------------------------------
+#ifdef DEBUG
+//	#define DEBUG_BACKDOOR
 #endif
+//----------------------------------------------------------------------
 
-#endif /* BACKDOOR_H */
-/*********************************** end of backdoor.h *********************************/
+// Funktionen definieren
+//----------------------------------------------------------------------
+void BackDoorInit (void);													// Backdoor-Eintritt initialisieren
+void BackDoorCheck (void);													// Backdoor oeffnen bzw. schliessen
+
+#if (BOOT_BACKDOOR_HOOKS_ENABLE == 0)
+	void BackDoorSetExtension (blt_int32u extension_ms);					// Backdoor-Zeit verlaengern
+	blt_int32u BackDoorGetExtension (void);									// Verlaengerung der Backdoor-Zeit auslesen
+	void BackDoorRestartTimer (void);										// Backdoor-Timer neu starten
+#endif
+//----------------------------------------------------------------------
+
+#endif /* INC_BACKDOOR_H_ */
+//----------------------------------------------------------------------

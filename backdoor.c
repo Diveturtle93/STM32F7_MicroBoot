@@ -1,195 +1,165 @@
-/************************************************************************************//**
-* \file         backdoor.c
-* \brief        Bootloader backdoor entry source file.
-* \ingroup      Core
-* \internal
-*----------------------------------------------------------------------------------------
-*                          C O P Y R I G H T
-*----------------------------------------------------------------------------------------
-*   Copyright (c) 2011  by Feaser    http://www.feaser.com    All rights reserved
-*
-*----------------------------------------------------------------------------------------
-*                            L I C E N S E
-*----------------------------------------------------------------------------------------
-* This file is part of OpenBLT. OpenBLT is free software: you can redistribute it and/or
-* modify it under the terms of the GNU General Public License as published by the Free
-* Software Foundation, either version 3 of the License, or (at your option) any later
-* version.
-*
-* OpenBLT is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-* PURPOSE. See the GNU General Public License for more details.
-*
-* You have received a copy of the GNU General Public License along with OpenBLT. It
-* should be located in ".\Doc\license.html". If not, contact Feaser to obtain a copy.
-*
-* \endinternal
-****************************************************************************************/
+//----------------------------------------------------------------------
+// Titel	:	backdoor.c
+//----------------------------------------------------------------------
+// Sprache	:	C
+// Datum	:	05.06.2026
+// Autor	:	Diveturtle93
+// Projekt	:	STM32F7_MicroBoot
+// Quelle	:	https://github.com/feaser/openblt/blob/master/Target/Source/backdoor.c
+//----------------------------------------------------------------------
 
-/****************************************************************************************
-* Include files
-****************************************************************************************/
-#include "boot.h"                                /* bootloader generic header          */
+// Lizenz
+//----------------------------------------------------------------------
+// Copyright (c) 2011  by Feaser    http://www.feaser.com    All rights reserved
+//
+// This file is part of OpenBLT. OpenBLT is free software: you can redistribute it and/or
+// modify it under the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any later
+// version.
+//
+// OpenBLT is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+// without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE. See the GNU General Public License for more details.
+//
+// You have received a copy of the GNU General Public License along with OpenBLT. It
+// should be located in ".\Doc\license.html". If not, contact Feaser to obtain a copy.
+//----------------------------------------------------------------------
 
+// Einfuegen der standard Include-Dateien
+//----------------------------------------------------------------------
 
-/****************************************************************************************
-* Macro definitions
-****************************************************************************************/
+//----------------------------------------------------------------------
+
+// Einfuegen der STM Include-Dateien
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+
+// Einfuegen der eigenen Include-Dateien
+//----------------------------------------------------------------------
+#include "boot.h"
+//----------------------------------------------------------------------
+
+// Konstanten definieren
+//----------------------------------------------------------------------
+// Zeit in ms, die die Backdoor geoeffnet ist. Kann durch Definition von
+// BOOT_BACKDOOR_ENTRY_TIMEOUT_MS in blt_conf.h ueberschrieben werden.
 #if (BOOT_BACKDOOR_HOOKS_ENABLE == 0)
-#ifndef BOOT_BACKDOOR_ENTRY_TIMEOUT_MS
-/** \brief Sets the time in milliseconds that the backdoor is open, but allow an
- *         override for this time. To change this value, simply add the macro
- *         BOOT_BACKDOOR_ENTRY_TIMEOUT_MS to blt_conf.h with your desired backdoor 
- *         open time in milliseconds.
- */
-#define BOOT_BACKDOOR_ENTRY_TIMEOUT_MS  (500)
+	#ifndef BOOT_BACKDOOR_ENTRY_TIMEOUT_MS
+		#define BOOT_BACKDOOR_ENTRY_TIMEOUT_MS	(500)
+	#endif
 #endif
-#endif /* BOOT_BACKDOOR_HOOKS_ENABLE == 0 */
+//----------------------------------------------------------------------
 
+// Variablen definieren
+//----------------------------------------------------------------------
+#if (BOOT_BACKDOOR_HOOKS_ENABLE == 0)
+	static blt_bool backdoorOpen;											// Backdoor geoeffnet oder geschlossen
+	static blt_int32u backdoorOpenTime;										// Zeitpunkt, zu dem die Backdoor geoeffnet wurde
 
-/****************************************************************************************
-* Hook functions
-****************************************************************************************/
+	// Verlaengerung der Backdoor-Zeit in ms. Muss hier und nicht in BackDoorInit()
+	// mit 0 initialisiert werden, da BackDoorInit() erst am Ende von BootInit()
+	// aufgerufen wird. So kann BackDoorSetExtension() schon vorher aufgerufen werden.
+	static blt_int32u backdoorExtensionTime = 0;
+#endif
+//----------------------------------------------------------------------
+
+// Hook-Funktionen definieren
+//----------------------------------------------------------------------
 #if (BOOT_BACKDOOR_HOOKS_ENABLE > 0)
-extern void BackDoorInitHook(void);
-extern blt_bool BackDoorEntryHook(void);
+	extern void BackDoorInitHook (void);									// Backdoor der Anwendung initialisieren
+	extern blt_bool BackDoorEntryHook (void);								// Abfrage, ob im Bootloader geblieben werden soll
 #endif
+//----------------------------------------------------------------------
 
-
-/****************************************************************************************
-* Local data declarations
-****************************************************************************************/
-#if (BOOT_BACKDOOR_HOOKS_ENABLE == 0)
-/** \brief To determine if the backdoor is open or closed. */
-static blt_bool backdoorOpen;
-/** \brief To determine how long the backdoor has been open in milliseconds. */
-static blt_int32u backdoorOpenTime;
-/** \brief In certain scenarios it is desired to be able to extend the default backdoor
- *         entry time at runtime. This variable holds the extension time in milliseconds.
- *         Note that this value must be initialized to zero here and not in function
- *         BackDoorInit(), because BackDoorInit() is one of the last functions called
- *         in BootInit(). This order should not be changed otherwise there is a chance
- *         that the timed backdoor partially or completely times out during BootInit().
- *         Initializing the variable here, allows function BackDoorSetExtension() to be
- *         called before BackDoorInit() was called.
- */
-static blt_int32u backdoorExtensionTime = 0;
-#endif
-
-
-/************************************************************************************//**
-** \brief     Initializes the backdoor entry option.
-** \return    none
-**
-****************************************************************************************/
-void BackDoorInit(void)
+// Backdoor-Eintritt initialisieren
+//----------------------------------------------------------------------
+void BackDoorInit (void)
 {
 #if (BOOT_BACKDOOR_HOOKS_ENABLE > 0)
-  /* initialize application's backdoor functionality */
-  BackDoorInitHook();
+	// Backdoor-Funktion der Anwendung initialisieren
+	BackDoorInitHook();
 
-  /* attempt to start the user program when no backdoor entry is requested */
-  if (BackDoorEntryHook() == BLT_FALSE)
-  {
-    /* this function does not return if a valid user program is present */
-    CpuStartUserProgram();
-  }
+	// Anwenderprogramm starten, wenn kein Backdoor-Eintritt angefordert ist
+	if (BackDoorEntryHook() == BLT_FALSE)
+	{
+		// Kehrt nicht zurueck, wenn ein gueltiges Anwenderprogramm vorhanden ist
+		CpuStartUserProgram();
+	}
 #else
-  /* open the backdoor after a reset */
-  backdoorOpen = BLT_TRUE;
-  BackDoorRestartTimer();
+	// Backdoor nach einem Reset oeffnen
+	backdoorOpen = BLT_TRUE;
+	BackDoorRestartTimer();
 #endif
-  /* perform the first check that open/closes the backdoor */
-  BackDoorCheck();
-} /*** end of BackDoorInit ***/
 
+	// Erste Pruefung, die die Backdoor oeffnet bzw. schliesst
+	BackDoorCheck();
+}
+//----------------------------------------------------------------------
 
-/************************************************************************************//**
-** \brief     The default backdoor entry feature keeps the bootloader active for a
-**            predetermined time after reset, allowing the host application to
-**            establish a connection and start a programming sequence. This function
-**            controls the opening/closing of the backdoor.
-** \return    none
-**
-****************************************************************************************/
-void BackDoorCheck(void)
+// Backdoor oeffnen bzw. schliessen. Der Bootloader bleibt nach einem Reset fuer eine
+// bestimmte Zeit aktiv, damit der Host eine Verbindung aufbauen kann.
+//----------------------------------------------------------------------
+void BackDoorCheck (void)
 {
 #if (BOOT_BACKDOOR_HOOKS_ENABLE == 0)
 #if (BOOT_COM_ENABLE > 0)
-  /* check if a connection with the host was already established. in this case the
-   * backdoor stays open anyway, so no need to check if it needs to be closed.
-   */
-  if (ComIsConnected() == BLT_TRUE)
-  {
-    return;
-  }
+	// Besteht bereits eine Verbindung zum Host, bleibt die Backdoor ohnehin offen
+	if (ComIsConnected() == BLT_TRUE)
+		return;
 #endif
 
-  /* when the backdoor is still open, check if it's time to close it */
-  if (backdoorOpen == BLT_TRUE)
-  {
-    /* check if the backdoor entry time window elapsed */
-    if (TimerGet() >= (BOOT_BACKDOOR_ENTRY_TIMEOUT_MS + backdoorExtensionTime + backdoorOpenTime))
-    {
-      /* close the backdoor */
-      backdoorOpen = BLT_FALSE;
-      {
-        /* no firmware update requests detected, so attempt to start the user program.
-         * this function does not return if a valid user program is present.
-         */
-        CpuStartUserProgram();
-      }
-    }
-  }
+	// Ist die Backdoor noch offen, pruefen ob sie geschlossen werden muss
+	if (backdoorOpen == BLT_TRUE)
+	{
+		// Pruefen ob das Zeitfenster fuer den Backdoor-Eintritt abgelaufen ist
+		if (TimerGet() >= (BOOT_BACKDOOR_ENTRY_TIMEOUT_MS + backdoorExtensionTime + backdoorOpenTime))
+		{
+			// Backdoor schliessen
+			backdoorOpen = BLT_FALSE;
+
+			// Keine Update-Anfrage erkannt, daher Anwenderprogramm starten. Kehrt nicht
+			// zurueck, wenn ein gueltiges Anwenderprogramm vorhanden ist.
+			CpuStartUserProgram();
+		}
+	}
 #endif
-} /*** end of BackDoorCheck ***/
+}
+//----------------------------------------------------------------------
 
-
+// Verlaengerung der Backdoor-Zeit (BOOT_BACKDOOR_ENTRY_TIMEOUT_MS) in ms setzen
+//----------------------------------------------------------------------
 #if (BOOT_BACKDOOR_HOOKS_ENABLE == 0)
-/************************************************************************************//**
-** \brief     Sets the amount of milliseconds that the default backdoor timeout time
-**            (BOOT_BACKDOOR_ENTRY_TIMEOUT_MS) is extended.
-** \param     extension_ms Extension time in milliseconds.
-** \return    none
-**
-****************************************************************************************/
-void BackDoorSetExtension(blt_int32u extension_ms)
+void BackDoorSetExtension (blt_int32u extension_ms)
 {
-  /* update the extension time */
-  backdoorExtensionTime = extension_ms;
-} /*** end of BackDoorSetExtension ***/
+	// Verlaengerung uebernehmen
+	backdoorExtensionTime = extension_ms;
+}
+#endif
+//----------------------------------------------------------------------
 
-
-/************************************************************************************//**
-** \brief     Gets the amount of milliseconds that the default backdoor timeout time
-**            (BOOT_BACKDOOR_ENTRY_TIMEOUT_MS) is extended.
-** \return    Extension time in milliseconds.
-**
-****************************************************************************************/
-blt_int32u BackDoorGetExtension(void)
+// Verlaengerung der Backdoor-Zeit (BOOT_BACKDOOR_ENTRY_TIMEOUT_MS) in ms zurueckgeben
+//----------------------------------------------------------------------
+#if (BOOT_BACKDOOR_HOOKS_ENABLE == 0)
+blt_int32u BackDoorGetExtension (void)
 {
-  /* read out and return the currently configured extension time */
-  return backdoorExtensionTime;
-} /*** end of BackDoorGetExtension ***/
+	// Eingestellte Verlaengerung zurueckgeben
+	return backdoorExtensionTime;
+}
+#endif
+//----------------------------------------------------------------------
 
-
-/************************************************************************************//**
-** \brief     Restarts the timed backdoor timer. It uses the current system time as the
-**            start time. The backdoor stays open for BOOT_BACKDOOR_ENTRY_TIMEOUT_MS
-**            after this start time, possibly extended in case BackDoorSetExtension() was
-**            called.
-** \return    none
-**
-****************************************************************************************/
-void BackDoorRestartTimer(void)
+// Backdoor-Timer mit der aktuellen Systemzeit neu starten. Die Backdoor bleibt danach
+// fuer BOOT_BACKDOOR_ENTRY_TIMEOUT_MS (plus Verlaengerung) geoeffnet.
+//----------------------------------------------------------------------
+#if (BOOT_BACKDOOR_HOOKS_ENABLE == 0)
+void BackDoorRestartTimer (void)
 {
-  /* only restart the time if the backdoor is actually still open */
-  if (backdoorOpen == BLT_TRUE)
-  {
-    backdoorOpenTime = TimerGet();
-  }
-} /*** end of BackDoorRestartTimer ***/
-#endif /* BOOT_BACKDOOR_HOOKS_ENABLE == 0 */
-
-
-/*********************************** end of backdoor.c *********************************/
+	// Timer nur neu starten, wenn die Backdoor noch offen ist
+	if (backdoorOpen == BLT_TRUE)
+	{
+		backdoorOpenTime = TimerGet();
+	}
+}
+#endif
+//----------------------------------------------------------------------

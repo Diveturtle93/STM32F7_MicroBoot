@@ -1,193 +1,174 @@
-/************************************************************************************//**
-* \file         Source/ARMCM7_STM32F7/cpu.c
-* \brief        Bootloader cpu module source file.
-* \ingroup      Target_ARMCM7_STM32F7
-* \internal
-*----------------------------------------------------------------------------------------
-*                          C O P Y R I G H T
-*----------------------------------------------------------------------------------------
-*   Copyright (c) 2018  by Feaser    http://www.feaser.com    All rights reserved
-*
-*----------------------------------------------------------------------------------------
-*                            L I C E N S E
-*----------------------------------------------------------------------------------------
-* This file is part of OpenBLT. OpenBLT is free software: you can redistribute it and/or
-* modify it under the terms of the GNU General Public License as published by the Free
-* Software Foundation, either version 3 of the License, or (at your option) any later
-* version.
-*
-* OpenBLT is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-* PURPOSE. See the GNU General Public License for more details.
-*
-* You have received a copy of the GNU General Public License along with OpenBLT. It
-* should be located in ".\Doc\license.html". If not, contact Feaser to obtain a copy.
-*
-* \endinternal
-****************************************************************************************/
+//----------------------------------------------------------------------
+// Titel	:	cpu.c
+//----------------------------------------------------------------------
+// Sprache	:	C
+// Datum	:	05.06.2026
+// Autor	:	Diveturtle93
+// Projekt	:	STM32F7_MicroBoot
+// Quelle	:	https://github.com/feaser/openblt/blob/master/Target/Source/ARMCM7_STM32F7/cpu.c
+//----------------------------------------------------------------------
 
-/****************************************************************************************
-* Include files
-****************************************************************************************/
-#include "boot.h"                                /* bootloader generic header          */
-#include "stm32f7xx.h"                           /* STM32 CPU and HAL header           */
+// Lizenz
+//----------------------------------------------------------------------
+// Copyright (c) 2018  by Feaser    http://www.feaser.com    All rights reserved
+//
+// This file is part of OpenBLT. OpenBLT is free software: you can redistribute it and/or
+// modify it under the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any later
+// version.
+//
+// OpenBLT is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+// without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE. See the GNU General Public License for more details.
+//
+// You have received a copy of the GNU General Public License along with OpenBLT. It
+// should be located in ".\Doc\license.html". If not, contact Feaser to obtain a copy.
+//----------------------------------------------------------------------
 
+// Einfuegen der standard Include-Dateien
+//----------------------------------------------------------------------
 
-/****************************************************************************************
-* Macro definitions
-****************************************************************************************/
-/** \brief Pointer to the user program's reset vector. */
-#define CPU_USER_PROGRAM_STARTADDR_PTR    ((blt_addr)(NvmGetUserProgBaseAddress() + 0x00000004))
-/** \brief Pointer to the user program's vector table. */
-#define CPU_USER_PROGRAM_VECTABLE_OFFSET  ((blt_int32u)NvmGetUserProgBaseAddress())
+//----------------------------------------------------------------------
 
+// Einfuegen der STM Include-Dateien
+//----------------------------------------------------------------------
+#include "stm32f7xx.h"
+//----------------------------------------------------------------------
 
-/****************************************************************************************
-* Hook functions
-****************************************************************************************/
+// Einfuegen der eigenen Include-Dateien
+//----------------------------------------------------------------------
+#include "boot.h"
+//----------------------------------------------------------------------
+
+// Konstanten definieren
+//----------------------------------------------------------------------
+#define CPU_USER_PROGRAM_STARTADDR_PTR			((blt_addr)(NvmGetUserProgBaseAddress() + 0x00000004))	// Zeiger auf den Reset-Vektor des Anwenderprogramms
+#define CPU_USER_PROGRAM_VECTABLE_OFFSET		((blt_int32u)NvmGetUserProgBaseAddress())	// Zeiger auf die Vektortabelle des Anwenderprogramms
+//----------------------------------------------------------------------
+
+// Variablen definieren
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+
+// Hook-Funktionen definieren
+//----------------------------------------------------------------------
 #if (BOOT_CPU_USER_PROGRAM_START_HOOK > 0)
-extern blt_bool CpuUserProgramStartHook(void);
+	extern blt_bool CpuUserProgramStartHook (void);							// Abfrage vor dem Start des Anwenderprogramms
+#endif
+//----------------------------------------------------------------------
+
+// CPU-Modul initialisieren
+//----------------------------------------------------------------------
+void CpuInit (void)
+{
+	// Der Bootloader arbeitet im Polling-Betrieb, daher globale Interrupts sperren. Wurde
+	// der Bootloader aus einem laufenden Anwenderprogramm gestartet, koennten dessen
+	// Peripherie-Interrupts noch aktiv sein.
+	CpuIrqDisable();
+}
+//----------------------------------------------------------------------
+
+// Anwenderprogramm starten, falls vorhanden. In diesem Fall kehrt die Funktion nicht zurueck.
+//----------------------------------------------------------------------
+void CpuStartUserProgram (void)
+{
+	void (*pProgResetHandler)(void);
+
+	// Pruefen ob ein gueltiges Anwenderprogramm vorhanden ist (Checksumme)
+	if (NvmVerifyChecksum() == BLT_FALSE)
+		return;
+
+#if (BOOT_CPU_USER_PROGRAM_START_HOOK > 0)
+	// Callback aufrufen, dieser kann den Start des Anwenderprogramms verhindern
+	if (CpuUserProgramStartHook() == BLT_FALSE)
+		return;
 #endif
 
-
-/************************************************************************************//**
-** \brief     Initializes the CPU module.
-** \return    none.
-**
-****************************************************************************************/
-void CpuInit(void)
-{
-  /* bootloader runs in polling mode so disable the global interrupts. this is done for
-   * safety reasons. if the bootloader was started from a running user program, it could 
-   * be that the user program did not properly disable the interrupt generation of 
-   * peripherals.
-   */
-  CpuIrqDisable();
-} /*** end of CpuInit ***/
-
-
-/************************************************************************************//**
-** \brief     Starts the user program, if one is present. In this case this function
-**            does not return.
-** \return    none.
-**
-****************************************************************************************/
-void CpuStartUserProgram(void)
-{
-  void (*pProgResetHandler)(void);
-
-  /* check if a user program is present by verifying the checksum */
-  if (NvmVerifyChecksum() == BLT_FALSE)
-  {
-    /* not a valid user program so it cannot be started */
-    return;
-  }
-#if (BOOT_CPU_USER_PROGRAM_START_HOOK > 0)
-  /* invoke callback */
-  if (CpuUserProgramStartHook() == BLT_FALSE)
-  {
-    /* callback requests the user program to not be started */
-    return;
-  }
-#endif
 #if (BOOT_COM_ENABLE > 0)
-  /* release the communication interface */
-  ComFree();
+	// Kommunikationsschnittstelle freigeben
+	ComFree();
 #endif
-  /* reset the HAL */
-  HAL_DeInit();
-  /* reset the timer */
-  TimerReset();
-  /* remap user program's vector table */
-  SCB->VTOR = CPU_USER_PROGRAM_VECTABLE_OFFSET & (blt_int32u)0x1FFFFF80;
-  /* set the address where the bootloader needs to jump to. this is the address of
-   * the 2nd entry in the user program's vector table. this address points to the
-   * user program's reset handler.
-   */
-  pProgResetHandler = (void(*)(void))(*((blt_addr *)CPU_USER_PROGRAM_STARTADDR_PTR));
-  /* The Cortex-M4 core has interrupts enabled out of reset. the bootloader
-   * explicitly disables these for security reasons. Enable them here again, so it does 
-   * not have to be done by the user program.
-   */
-  CpuIrqEnable();
-  /* start the user program by activating its reset interrupt service routine */
-  pProgResetHandler();
-} /*** end of CpuStartUserProgram ***/
 
+	// HAL zuruecksetzen
+	HAL_DeInit();
 
-/************************************************************************************//**
-** \brief     Copies data from the source to the destination address.
-** \param     dest Destination address for the data.
-** \param     src  Source address of the data.
-** \param     len  length of the data in bytes.
-** \return    none.
-**
-****************************************************************************************/
-void CpuMemCopy(blt_addr dest, blt_addr src, blt_int16u len)
+	// Timer zuruecksetzen
+	TimerReset();
+
+	// Vektortabelle des Anwenderprogramms einstellen
+	SCB->VTOR = CPU_USER_PROGRAM_VECTABLE_OFFSET & (blt_int32u)0x1FFFFF80;
+
+	// Sprungadresse setzen. Das ist der zweite Eintrag der Vektortabelle des
+	// Anwenderprogramms und zeigt auf dessen Reset-Handler.
+	pProgResetHandler = (void(*)(void))(*((blt_addr *)CPU_USER_PROGRAM_STARTADDR_PTR));
+
+	// Der Bootloader hat die Interrupts gesperrt. Hier wieder freigeben, damit das
+	// Anwenderprogramm dies nicht selbst tun muss.
+	CpuIrqEnable();
+
+	// Anwenderprogramm ueber dessen Reset-Handler starten
+	pProgResetHandler();
+}
+//----------------------------------------------------------------------
+
+// Daten von der Quell- zur Zieladresse kopieren
+// dest = Zieladresse, src = Quelladresse, len = Laenge in Bytes
+//----------------------------------------------------------------------
+void CpuMemCopy (blt_addr dest, blt_addr src, blt_int16u len)
 {
-  blt_int8u *from, *to;
+	blt_int8u *from, *to;
 
-  /* set casted pointers */
-  from = (blt_int8u *)src;
-  to = (blt_int8u *)dest;
+	// Zeiger setzen
+	from = (blt_int8u *)src;
+	to = (blt_int8u *)dest;
 
-  /* copy all bytes from source address to destination address */
-  while (len-- > 0)
-  {
-    /* store byte value from source to destination */
-    *to++ = *from++;
-    /* keep the watchdog happy */
-    CopService();
-  }
-} /*** end of CpuMemCopy ***/
+	// Alle Bytes von der Quell- zur Zieladresse kopieren
+	while (len-- > 0)
+	{
+		// Byte kopieren
+		*to++ = *from++;
 
+		// Watchdog bedienen
+		CopService();
+	}
+}
+//----------------------------------------------------------------------
 
-/************************************************************************************//**
-** \brief     Sets the bytes at the destination address to the specified value.
-** \param     dest Destination address for the data.
-** \param     value Value to write.
-** \param     len  Number of bytes to write.
-** \return    none.
-**
-****************************************************************************************/
-void CpuMemSet(blt_addr dest, blt_int8u value, blt_int16u len)
+// Bytes ab der Zieladresse auf einen Wert setzen
+// dest = Zieladresse, value = Wert, len = Anzahl Bytes
+//----------------------------------------------------------------------
+void CpuMemSet (blt_addr dest, blt_int8u value, blt_int16u len)
 {
-  blt_int8u *to;
+	blt_int8u *to;
 
-  /* set casted pointer */
-  to = (blt_int8u *)dest;
+	// Zeiger setzen
+	to = (blt_int8u *)dest;
 
-  /* set all bytes at the destination address to the specified value */
-  while (len-- > 0)
-  {
-    /* set byte value */
-    *to++ = value;
-    /* keep the watchdog happy */
-    CopService();
-  }
-} /*** end of CpuMemSet ***/
+	// Alle Bytes ab der Zieladresse auf den Wert setzen
+	while (len-- > 0)
+	{
+		// Byte setzen
+		*to++ = value;
 
+		// Watchdog bedienen
+		CopService();
+	}
+}
+//----------------------------------------------------------------------
 
-/************************************************************************************//**
-** \brief     Disable global interrupts.
-** \return    none.
-**
-****************************************************************************************/
-void CpuIrqDisable(void)
+// Globale Interrupts sperren
+//----------------------------------------------------------------------
+void CpuIrqDisable (void)
 {
-  __asm volatile ("cpsid i");
-} /*** end of CpuIrqDisable ***/
+	__asm volatile ("cpsid i");
+}
+//----------------------------------------------------------------------
 
-
-/************************************************************************************//**
-** \brief     Enable global interrupts.
-** \return    none.
-**
-****************************************************************************************/
-void CpuIrqEnable(void)
+// Globale Interrupts freigeben
+//----------------------------------------------------------------------
+void CpuIrqEnable (void)
 {
-  __asm volatile ("cpsie i");
-} /*** end of CpuIrqEnable ***/
-
-
-/*********************************** end of cpu.c **************************************/
+	__asm volatile ("cpsie i");
+}
+//----------------------------------------------------------------------

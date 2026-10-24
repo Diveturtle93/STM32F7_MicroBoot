@@ -1,39 +1,68 @@
-/************************************************************************************//**
-* \file         Demo/ARMCM7_STM32F7_Nucleo_F767ZI_CubeIDE/Prog/App/app.h
-* \brief        User program application header file.
-* \ingroup      Prog_ARMCM7_STM32F7_Nucleo_F767ZI_CubeIDE
-* \internal
-*----------------------------------------------------------------------------------------
-*                          C O P Y R I G H T
-*----------------------------------------------------------------------------------------
-*   Copyright (c) 2020  by Feaser    http://www.feaser.com    All rights reserved
-*
-*----------------------------------------------------------------------------------------
-*                            L I C E N S E
-*----------------------------------------------------------------------------------------
-* This file is part of OpenBLT. OpenBLT is free software: you can redistribute it and/or
-* modify it under the terms of the GNU General Public License as published by the Free
-* Software Foundation, either version 3 of the License, or (at your option) any later
-* version.
-*
-* OpenBLT is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-* PURPOSE. See the GNU General Public License for more details.
-*
-* You have received a copy of the GNU General Public License along with OpenBLT. It
-* should be located in ".\Doc\license.html". If not, contact Feaser to obtain a copy.
-*
-* \endinternal
-****************************************************************************************/
-#ifndef APP_H
-#define APP_H
+//----------------------------------------------------------------------
+// Titel	:	app.h
+//----------------------------------------------------------------------
+// Sprache	:	C
+// Datum	:	05.06.2026
+// Autor	:	Diveturtle93
+// Projekt	:	STM32F7_MicroBoot
+// Quelle	:	https://github.com/feaser/openblt/blob/master/Target/Demo/ARMCM7_STM32F7_Nucleo_F767ZI_CubeIDE/Boot/App/app.h
+//----------------------------------------------------------------------
 
-/****************************************************************************************
-* Function prototypes
-****************************************************************************************/
-void AppInit(void);
-void AppTask(void);
+// Lizenz
+//----------------------------------------------------------------------
+// Copyright (c) 2020  by Feaser    http://www.feaser.com    All rights reserved
+//
+// This file is part of OpenBLT. OpenBLT is free software: you can redistribute it and/or
+// modify it under the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any later
+// version.
+//
+// OpenBLT is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+// without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE. See the GNU General Public License for more details.
+//
+// You have received a copy of the GNU General Public License along with OpenBLT. It
+// should be located in ".\Doc\license.html". If not, contact Feaser to obtain a copy.
+//----------------------------------------------------------------------
 
+// Sicherheitssymbol
+//----------------------------------------------------------------------
+#pragma once
+//----------------------------------------------------------------------
 
-#endif /* APP_H */
-/*********************************** end of app.h **************************************/
+// Dateiheader definieren
+//----------------------------------------------------------------------
+#ifndef INC_APP_H_
+#define INC_APP_H_
+//----------------------------------------------------------------------
+
+// Einfuegen der standard Include-Dateien
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+
+// Einfuegen der STM Include-Dateien
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+
+// Einfuegen der eigenen Include-Dateien
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+
+// Definiere Debug-Symbole
+//----------------------------------------------------------------------
+#ifdef DEBUG
+//	#define DEBUG_APP
+#endif
+//----------------------------------------------------------------------
+
+// Funktionen definieren
+//----------------------------------------------------------------------
+void AppInit (void);														// Bootloader-Anwendung initialisieren
+void AppTask (void);														// Bootloader-Anwendung zyklisch ausfuehren
+//----------------------------------------------------------------------
+
+#endif /* INC_APP_H_ */
+//----------------------------------------------------------------------
