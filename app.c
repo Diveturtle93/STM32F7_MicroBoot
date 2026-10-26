@@ -37,7 +37,6 @@
 
 // Einfuegen der eigenen Include-Dateien
 //----------------------------------------------------------------------
-#include "app.h"
 #include "boot.h"
 #include "shared_params.h"
 //----------------------------------------------------------------------

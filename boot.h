@@ -73,7 +73,7 @@
 // Konstanten definieren
 //----------------------------------------------------------------------
 #define BOOT_VERSION_CORE_MAIN					(1u)						// Hauptversion des Bootloader-Kerns
-#define BOOT_VERSION_CORE_MINOR					(21u)						// Nebenversion des Bootloader-Kerns
+#define BOOT_VERSION_CORE_MINOR					(22u)						// Nebenversion des Bootloader-Kerns
 #define BOOT_VERSION_CORE_PATCH					(0u)						// Patch-Stand des Bootloader-Kerns
 //----------------------------------------------------------------------
 

@@ -66,6 +66,11 @@ void BootInit (void)
 	ComInit();
 #endif
 
+#if (BOOT_INFO_TABLE_ENABLE > 0)
+	// Info-Tabellen-Modul initialisieren
+	InfoTableInit();
+#endif
+
 	// Backdoor-Eintritt initialisieren
 	BackDoorInit();
 }

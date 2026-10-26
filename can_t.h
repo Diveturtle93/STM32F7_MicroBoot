@@ -43,7 +43,10 @@
 
 // Einfuegen der STM Include-Dateien
 //----------------------------------------------------------------------
-
+#if (BOOT_COM_CAN_ENABLE > 0)
+	#include "stm32f7xx.h"
+	#include "stm32f7xx_ll_rcc.h"
+#endif
 //----------------------------------------------------------------------
 
 // Einfuegen der eigenen Include-Dateien

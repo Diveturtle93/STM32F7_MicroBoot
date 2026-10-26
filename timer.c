@@ -42,12 +42,6 @@
 #include "boot.h"
 //----------------------------------------------------------------------
 
-// Konstanten definieren
-//----------------------------------------------------------------------
-#define TIMER_COUNTER_FREQ_HZ					(100000U)					// Frequenz des freilaufenden Zaehlers in Hz (100 kHz)
-#define TIMER_COUNTS_PER_MS						(TIMER_COUNTER_FREQ_HZ / 1000U)	// Zaehlschritte pro Millisekunde
-//----------------------------------------------------------------------
-
 // Variablen definieren
 //----------------------------------------------------------------------
 static blt_int32u millisecond_counter;										// Millisekunden seit dem Start

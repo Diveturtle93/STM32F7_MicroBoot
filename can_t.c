@@ -32,8 +32,7 @@
 
 // Einfuegen der STM Include-Dateien
 //----------------------------------------------------------------------
-#include "stm32f7xx.h"
-#include "stm32f7xx_ll_rcc.h"
+
 //----------------------------------------------------------------------
 
 // Einfuegen der eigenen Include-Dateien

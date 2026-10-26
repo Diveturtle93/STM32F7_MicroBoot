@@ -265,22 +265,27 @@ blt_bool FlashVerifyChecksum (void)
 //----------------------------------------------------------------------
 blt_bool FlashDone (void)
 {
+	blt_bool result = BLT_TRUE;
+	
 	// Pruefen ob im Boot-Block noch Daten auf die Programmierung warten
 	if (bootBlockInfo.base_addr != FLASH_INVALID_ADDRESS)
 	{
-		if (FlashWriteBlock(&bootBlockInfo) == BLT_FALSE)
-			return BLT_FALSE;
+		if (FlashWriteBlock(&bootInfo) == BLT_FALSE)
+			result = BLT_FALSE;
 	}
 
-	// Pruefen ob noch Daten auf die Programmierung warten
-	if (blockInfo.base_addr != FLASH_INVALID_ADDRESS)
+	if (result == BLT_TRUE)
 	{
-		if (FlashWriteBlock(&blockInfo) == BLT_FALSE)
-			return BLT_FALSE;
+		// Pruefen ob noch Daten auf die Programmierung warten
+		if (blockInfo.base_addr != FLASH_INVALID_ADDRESS)
+		{
+			if (FlashWriteBlock(&bootBlockInfo) == BLT_FALSE)
+				result = BLT_FALSE;
+		}
 	}
 
 	// Alles in Ordnung
-	return BLT_TRUE;
+	return result;
 }
 //----------------------------------------------------------------------
 
