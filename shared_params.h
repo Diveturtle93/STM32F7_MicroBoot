@@ -59,6 +59,12 @@
 #endif
 //----------------------------------------------------------------------
 
+// Konstanten definieren
+//----------------------------------------------------------------------
+#define SHARED_PARAMS_CFG_BUFFER_DATA_LEN		(56u)						// Laenge der Parameterdaten in Bytes (ohne Kennung und Checksumme)
+#define SHARED_PARAMS_BUFFER_ID					(0xCE42E7A2u)				// Feste Kennung am Pufferanfang zur Pruefung auf gueltige Parameter
+//----------------------------------------------------------------------
+
 // Typedefines definieren
 //----------------------------------------------------------------------
 typedef struct t_shared_params_buffer
@@ -67,12 +73,6 @@ typedef struct t_shared_params_buffer
 	uint8_t data[SHARED_PARAMS_CFG_BUFFER_DATA_LEN];						// Eigentliche Parameterdaten
 	uint16_t checksum;														// Checksumme (Zweierkomplement der Summe aller Bytes ohne Checksumme)
 } tSharedParamsBuffer;
-//----------------------------------------------------------------------
-
-// Konstanten definieren
-//----------------------------------------------------------------------
-#define SHARED_PARAMS_CFG_BUFFER_DATA_LEN		(56u)						// Laenge der Parameterdaten in Bytes (ohne Kennung und Checksumme)
-#define SHARED_PARAMS_BUFFER_ID					(0xCE42E7A2u)				// Feste Kennung am Pufferanfang zur Pruefung auf gueltige Parameter
 //----------------------------------------------------------------------
 
 // Funktionen definieren

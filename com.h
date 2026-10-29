@@ -60,22 +60,6 @@
 #endif
 //----------------------------------------------------------------------
 
-// Typedefines definieren
-//----------------------------------------------------------------------
-#if (BOOT_COM_ENABLE > 0)
-	typedef enum
-	{
-		COM_IF_RS232,														// 0 RS232-Schnittstelle
-		COM_IF_MBRTU,														// 1 Modbus-RTU-Schnittstelle
-		COM_IF_CAN,															// 2 CAN-Schnittstelle
-		COM_IF_USB,															// 3 USB-Schnittstelle
-		COM_IF_CUSTOM,														// 4 Eigene Schnittstelle
-		COM_IF_NET,															// 5 Netzwerk-Schnittstelle
-		COM_IF_OTHER														// 6 Andere Schnittstelle
-	} tComInterfaceId;
-#endif
-//----------------------------------------------------------------------
-
 // Konstanten definieren
 //----------------------------------------------------------------------
 #if (BOOT_COM_ENABLE > 0)
@@ -123,6 +107,22 @@
 	#if (BOOT_COM_RX_MAX_DATA > 65536)
 		#error "COM.H, BOOT_COM_RX_MAX_DATA cannot be larger than 65536."
 	#endif
+#endif
+//----------------------------------------------------------------------
+
+// Typedefines definieren
+//----------------------------------------------------------------------
+#if (BOOT_COM_ENABLE > 0)
+	typedef enum
+	{
+		COM_IF_RS232,														// 0 RS232-Schnittstelle
+		COM_IF_MBRTU,														// 1 Modbus-RTU-Schnittstelle
+		COM_IF_CAN,															// 2 CAN-Schnittstelle
+		COM_IF_USB,															// 3 USB-Schnittstelle
+		COM_IF_CUSTOM,														// 4 Eigene Schnittstelle
+		COM_IF_NET,															// 5 Netzwerk-Schnittstelle
+		COM_IF_OTHER														// 6 Andere Schnittstelle
+	} tComInterfaceId;
 #endif
 //----------------------------------------------------------------------
 

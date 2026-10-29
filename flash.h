@@ -58,25 +58,6 @@
 #endif
 //----------------------------------------------------------------------
 
-// Typedefines definieren
-//----------------------------------------------------------------------
-typedef struct
-{
-	blt_addr sector_start;													// Startadresse des Sektors
-	blt_int32u sector_size;													// Groesse des Sektors in Bytes
-	blt_int8u sector_num;													// Sektornummer
-} tFlashSector;
-//----------------------------------------------------------------------
-// Informationen eines Flash-Blocks. Programmiert wird blockweise mit maximal
-// FLASH_WRITE_BLOCK_SIZE Bytes ueber einen Block-Manager. base_addr muss ein Vielfaches
-// von FLASH_WRITE_BLOCK_SIZE sein.
-typedef struct
-{
-	blt_addr base_addr;														// Startadresse des Blocks
-	blt_int8u data[FLASH_WRITE_BLOCK_SIZE];									// Zu programmierende Daten
-} tFlashBlockInfo;
-//----------------------------------------------------------------------
-
 // Konstanten definieren
 //----------------------------------------------------------------------
 #define FLASH_INVALID_SECTOR					(0xff)						// Wert fuer einen ungueltigen Flash-Sektor
@@ -96,6 +77,25 @@ typedef struct
 #ifndef BOOT_FLASH_CUSTOM_LAYOUT_ENABLE
 	#define BOOT_FLASH_CUSTOM_LAYOUT_ENABLE		(0u)
 #endif
+//----------------------------------------------------------------------
+
+// Typedefines definieren
+//----------------------------------------------------------------------
+typedef struct
+{
+	blt_addr sector_start;													// Startadresse des Sektors
+	blt_int32u sector_size;													// Groesse des Sektors in Bytes
+	blt_int8u sector_num;													// Sektornummer
+} tFlashSector;
+//----------------------------------------------------------------------
+// Informationen eines Flash-Blocks. Programmiert wird blockweise mit maximal
+// FLASH_WRITE_BLOCK_SIZE Bytes ueber einen Block-Manager. base_addr muss ein Vielfaches
+// von FLASH_WRITE_BLOCK_SIZE sein.
+typedef struct
+{
+	blt_addr base_addr;														// Startadresse des Blocks
+	blt_int8u data[FLASH_WRITE_BLOCK_SIZE];									// Zu programmierende Daten
+} tFlashBlockInfo;
 //----------------------------------------------------------------------
 
 // Funktionen definieren

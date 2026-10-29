@@ -61,6 +61,14 @@
 #endif
 //----------------------------------------------------------------------
 
+// Konstanten definieren
+//----------------------------------------------------------------------
+#if (BOOT_COM_CAN_ENABLE > 0)
+	#define CAN_MSG_TX_TIMEOUT_MS				(50u)						// Timeout fuer das Senden einer CAN-Nachricht in ms
+	#define CAN_CHANNEL							CAN3						// Verwendeter CAN-Kanal des STM32
+#endif
+//----------------------------------------------------------------------
+
 // Typedefines definieren
 //----------------------------------------------------------------------
 #if (BOOT_COM_CAN_ENABLE > 0)
@@ -69,14 +77,6 @@
 		blt_int8u tseg1;													// CAN Zeitsegment 1
 		blt_int8u tseg2;													// CAN Zeitsegment 2
 	} tCanBusTiming;
-#endif
-//----------------------------------------------------------------------
-
-// Konstanten definieren
-//----------------------------------------------------------------------
-#if (BOOT_COM_CAN_ENABLE > 0)
-	#define CAN_MSG_TX_TIMEOUT_MS				(50u)						// Timeout fuer das Senden einer CAN-Nachricht in ms
-	#define CAN_CHANNEL							CAN3						// Verwendeter CAN-Kanal des STM32
 #endif
 //----------------------------------------------------------------------
 

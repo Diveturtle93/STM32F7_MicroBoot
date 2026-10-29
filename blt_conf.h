@@ -99,7 +99,7 @@
 // anwendungsspezifische ersetzt werden.
 #define BOOT_NVM_HOOKS_ENABLE					(0)							// Hook-Funktionen fuer zusaetzliche Speicher ein/aus
 #define BOOT_NVM_SIZE_KB						(2048)						// Groesse des internen Flash in kB
-#define BOOT_NVM_CHECKSUM_HOOKS_ENABLE			(0)							// Hook-Funktionen fuer die Checksumme ein/aus
+#define BOOT_NVM_CHECKSUM_HOOKS_ENABLE			(1)							// Hook-Funktionen fuer die Checksumme ein/aus
 //----------------------------------------------------------------------
 
 // Flash-Treiber konfigurieren

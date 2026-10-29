@@ -271,7 +271,9 @@ blt_bool FlashDone (void)
 	if (bootBlockInfo.base_addr != FLASH_INVALID_ADDRESS)
 	{
 		if (FlashWriteBlock(&bootInfo) == BLT_FALSE)
+		{
 			result = BLT_FALSE;
+		}
 	}
 
 	if (result == BLT_TRUE)
@@ -280,7 +282,9 @@ blt_bool FlashDone (void)
 		if (blockInfo.base_addr != FLASH_INVALID_ADDRESS)
 		{
 			if (FlashWriteBlock(&bootBlockInfo) == BLT_FALSE)
+			{
 				result = BLT_FALSE;
+			}
 		}
 	}
 

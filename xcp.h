@@ -58,23 +58,6 @@
 #endif
 //----------------------------------------------------------------------
 
-// Typedefines definieren
-//----------------------------------------------------------------------
-#if (BOOT_COM_ENABLE > 0)
-	typedef struct
-	{
-		blt_int8u ctoData[BOOT_COM_RX_MAX_DATA];							// Datenpuffer fuer CTO-Pakete
-		blt_int8u connected;												// Verbindung aufgebaut
-		blt_int8u protection;												// Schutzstatus der Ressourcen
-		blt_int8u s_n_k_resource;											// Ressource fuer die Seed/Key-Sequenz
-		blt_int8u ctoPending;												// CTO-Sendung ausstehend
-		blt_int16s ctoLen;													// Aktuelle Laenge des CTO-Pakets
-		blt_int32u mta;														// Speicher-Transferadresse (MTA)
-		blt_int8u node_id;													// Knoten-ID aus dem Verbindungsmodus
-	} tXcpInfo;
-#endif
-//----------------------------------------------------------------------
-
 // XCP konfigurieren
 //----------------------------------------------------------------------
 #if (BOOT_COM_ENABLE > 0)
@@ -208,6 +191,23 @@
 
 	#define XCP_SEED_MAX_LEN					(BOOT_XCP_SEED_MAX_LEN)		// Maximale Laenge des Seeds in Bytes
 	#define XCP_KEY_MAX_LEN						(BOOT_XCP_KEY_MAX_LEN)		// Maximale Laenge des Schluessels in Bytes
+#endif
+//----------------------------------------------------------------------
+
+// Typedefines definieren
+//----------------------------------------------------------------------
+#if (BOOT_COM_ENABLE > 0)
+	typedef struct
+	{
+		blt_int8u ctoData[BOOT_COM_RX_MAX_DATA];							// Datenpuffer fuer CTO-Pakete
+		blt_int8u connected;												// Verbindung aufgebaut
+		blt_int8u protection;												// Schutzstatus der Ressourcen
+		blt_int8u s_n_k_resource;											// Ressource fuer die Seed/Key-Sequenz
+		blt_int8u ctoPending;												// CTO-Sendung ausstehend
+		blt_int16s ctoLen;													// Aktuelle Laenge des CTO-Pakets
+		blt_int32u mta;														// Speicher-Transferadresse (MTA)
+		blt_int8u node_id;													// Knoten-ID aus dem Verbindungsmodus
+	} tXcpInfo;
 #endif
 //----------------------------------------------------------------------
 

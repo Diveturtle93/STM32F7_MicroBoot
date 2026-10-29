@@ -51,6 +51,13 @@
 
 //----------------------------------------------------------------------
 
+// Konstanten definieren
+//----------------------------------------------------------------------
+#define BLT_TRUE								(1)							// Boolescher Wert wahr
+#define BLT_FALSE								(0)							// Boolescher Wert falsch
+#define BLT_NULL								((void *)0)					// Null-Zeiger
+//----------------------------------------------------------------------
+
 // Typedefines definieren
 //----------------------------------------------------------------------
 typedef unsigned char blt_bool;												// Boolescher Typ
@@ -62,13 +69,6 @@ typedef unsigned short blt_int16u;											// 16-Bit vorzeichenlos
 typedef signed short blt_int16s;											// 16-Bit vorzeichenbehaftet
 typedef unsigned int blt_int32u;											// 32-Bit vorzeichenlos
 typedef signed int blt_int32s;												// 32-Bit vorzeichenbehaftet
-//----------------------------------------------------------------------
-
-// Konstanten definieren
-//----------------------------------------------------------------------
-#define BLT_TRUE								(1)							// Boolescher Wert wahr
-#define BLT_FALSE								(0)							// Boolescher Wert falsch
-#define BLT_NULL								((void *)0)					// Null-Zeiger
 //----------------------------------------------------------------------
 
 #endif /* INC_TYPES_H_ */
